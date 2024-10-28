@@ -8,12 +8,12 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from datetime import datetime
 
-# Fetch stock data using yfinance
+# Fetching stock data using yfinance
 def fetch_stock_data(ticker, start_date, end_date):
     stock_data = yf.download(ticker, start=start_date, end=end_date)
     return stock_data
 
-# Prepare the data for LSTM model
+# Preparing the data for LSTM model
 def prepare_data(stock_data):
     # Using the 'Close' price as the feature for prediction
     close_prices = stock_data['Close'].values
@@ -25,7 +25,7 @@ def prepare_data(stock_data):
 
     return scaled_data, scaler
 
-# Create dataset with look-back
+# Creating dataset with look-back
 def create_dataset(data, look_back=60):
     x_data, y_data = [], []
     for i in range(look_back, len(data)):
@@ -33,7 +33,7 @@ def create_dataset(data, look_back=60):
         y_data.append(data[i, 0])
     return np.array(x_data), np.array(y_data)
 
-# Build the LSTM model
+# Building the LSTM model
 def build_lstm_model(input_shape):
     model = Sequential()
     model.add(LSTM(units=50, return_sequences=True, input_shape=input_shape))
@@ -44,7 +44,7 @@ def build_lstm_model(input_shape):
     model.compile(optimizer='adam', loss='mean_squared_error')
     return model
 
-# Predict the next day's stock price movement
+# Predicting the next day's stock price movement
 def predict_movement(model, data, scaler, look_back=60):
     last_days = data[-look_back:]
     last_days_scaled = scaler.transform(last_days)
@@ -61,35 +61,35 @@ def stock_analysis(ticker, start_date, end_date):
     stock_data = fetch_stock_data(ticker, start_date, end_date)
     scaled_data, scaler = prepare_data(stock_data)
 
-    # Create the dataset with look-back window
+    # Creating the dataset with look-back window
     look_back = 60  # Looking back 60 days to predict the next day's price
     X, y = create_dataset(scaled_data, look_back)
 
-    # Reshape X to be compatible with LSTM [samples, time steps, features]
+    # Reshaping X to be compatible with LSTM [samples, time steps, features]
     X = np.reshape(X, (X.shape[0], X.shape[1], 1))
 
-    # Split the data into training and testing sets (80% train, 20% test)
+    # Splitting the data into training and testing sets (80% train, 20% test)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle=False)
 
-    # Build and train the LSTM model
+    # Building and training the LSTM model
     model = build_lstm_model(input_shape=(X_train.shape[1], 1))
     model.fit(X_train, y_train, epochs=10, batch_size=32)
 
-    # Predict the next day's stock movement
+    # Predicting the next day's stock movement
     predicted_price = predict_movement(model, stock_data['Close'].values.reshape(-1, 1), scaler)
 
-    # Compare the predicted price with the last known closing price
+    # Comparing the predicted price with the last known closing price
     last_price = stock_data['Close'].values[-1]
     print(f"Last closing price: {last_price}")
     print(f"Predicted price for next day: {predicted_price[0][0]}")
 
-    # Determine if the stock is predicted to increase or decrease
+    # Analyzing if the stock is predicted to increase or decrease
     if predicted_price > last_price:
         print(f"The stock price of {ticker} is predicted to INCREASE in the next 24 hours.")
     else:
         print(f"The stock price of {ticker} is predicted to DECREASE in the next 24 hours.")
 
-# Plot the results for better visualization
+# Plotting the results for better visualization
 def plot_predictions(stock_data, predicted_price, scaler):
     plt.figure(figsize=(12,6))
     plt.plot(stock_data['Close'], label='Actual Stock Price')
@@ -100,7 +100,7 @@ def plot_predictions(stock_data, predicted_price, scaler):
     plt.legend()
     plt.show()
 
-# Run the analysis for a specific stock (e.g., AAPL)
+# Run the analysis for a specific stock
 ticker = "ITC"
 start_date = "2020-01-01"
 end_date = datetime.now().strftime('%Y-%m-%d')  # Fetch data up to today
